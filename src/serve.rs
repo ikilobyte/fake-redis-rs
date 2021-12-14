@@ -1,0 +1,77 @@
+use crate::client::Client;
+use crate::protocol::{Parser, Protocol};
+use anyhow::Error;
+use bytes::{Bytes, BytesMut};
+use tokio::io::{AsyncBufReadExt, AsyncReadExt, AsyncWriteExt, BufReader};
+use tokio::net::tcp::{ReadHalf, WriteHalf};
+use tokio::net::{TcpListener, TcpStream};
+
+#[derive(Clone, Debug)]
+pub struct Serve {
+    host: String,
+    port: u16,
+    socket_id: usize,
+}
+
+impl Serve {
+    pub fn new(host: String, port: u16) -> Self {
+        Self {
+            host,
+            port,
+            socket_id: 0,
+        }
+    }
+
+    // 生成连接ID
+    pub fn incr_socket_id(&mut self) -> usize {
+        self.socket_id += 1;
+        self.socket_id
+    }
+
+    pub async fn start(mut self) -> Result<(), Error> {
+        let listener = TcpListener::bind(format!("{}:{}", self.host, self.port)).await?;
+
+        loop {
+            if let Ok((mut stream, _)) = listener.accept().await {
+                // 生成一个新的ID
+                let socket_id = self.incr_socket_id();
+
+                // 处理连接信息
+                tokio::spawn(self.clone().handle_connect(stream, socket_id));
+            }
+        }
+    }
+
+    // 处理连接
+    pub async fn handle_connect(self, mut stream: TcpStream, socket_id: usize) {
+        let client = Client::new(socket_id);
+
+        let (mut socket_reader, mut socket_writer) = stream.into_split();
+
+        // 处理通道消息
+        tokio::spawn(client.clone().rev_forward_message(socket_writer));
+
+        loop {
+            // 使用Bytes可以读取一个完整的数据
+            let mut buffer = BytesMut::new();
+            if let Ok(_) = socket_reader.read_buf(&mut buffer).await {
+                // 退出了
+                if buffer.is_empty() {
+                    break;
+                }
+
+                let content = String::from_utf8_lossy(&buffer.to_vec()[..]).to_string();
+
+                println!("content -> {:#?}", content);
+                let protocol = Parser::start(content.clone());
+
+                println!("parser -> protocol {:#?}", protocol);
+
+                // 解析出数据
+                client.sender.send(protocol);
+            }
+        }
+
+        println!("client {} is closed", socket_id);
+    }
+}
