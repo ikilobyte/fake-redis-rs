@@ -1,6 +1,7 @@
 use crate::protocol::Protocol;
 use crate::storage::hash::THash;
 use crate::storage::string::TString;
+use std::collections::HashSet;
 use std::sync::Arc;
 use tokio::sync::{Mutex, MutexGuard};
 
@@ -14,6 +15,7 @@ pub struct DB {
 
 #[derive(Debug)]
 pub struct Inner {
+    pub keys: HashSet<String>, // 保存所有的key
     pub t_string: TString,
     pub t_hash: THash,
 }
@@ -22,6 +24,7 @@ impl DB {
     pub fn new() -> Self {
         Self {
             inner: Arc::new(Mutex::new(Inner {
+                keys: HashSet::new(),
                 t_string: TString::new(),
                 t_hash: THash::new(),
             })),
@@ -46,6 +49,7 @@ impl DB {
             } => inner.t_string.set(key, value, ttl, lock),
 
             Protocol::Get { key } => inner.t_string.get(key),
+            Protocol::HSet { key, field, value } => inner.t_hash.set(key, field, value),
             _ => Ok("+OK\r\n".to_string()),
         };
     }
@@ -62,6 +66,7 @@ impl Clone for DB {
 impl Clone for Inner {
     fn clone(&self) -> Self {
         Self {
+            keys: self.keys.clone(),
             t_hash: self.t_hash.clone(),
             t_string: self.t_string.clone(),
         }

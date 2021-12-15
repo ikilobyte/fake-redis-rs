@@ -10,8 +10,17 @@ pub enum Protocol {
         ttl: Option<(TTL, usize)>, // 过期时间
         lock: Option<Lock>,        // 排斥相关
     },
+
+    // get key
     Get {
         key: String, // 获取哪个key
+    },
+
+    // hset key field value
+    HSet {
+        key: String,
+        field: String,
+        value: String,
     },
     UnSupport,
     Error(String),
@@ -38,7 +47,7 @@ impl From<Vec<String>> for Protocol {
 
         //
         let cmd = &params[0][..];
-        // println!("cmd -> {}", cmd);
+        println!("cmd -> {}", cmd);
         return match cmd {
             "SET" => {
                 // 获取过期时间
@@ -69,6 +78,19 @@ impl From<Vec<String>> for Protocol {
                 }
                 Protocol::Get {
                     key: params[1].to_string(),
+                }
+            }
+            "HSET" => {
+                if params.len() != 4 {
+                    return Protocol::Error(
+                        "ERR wrong number of arguments for 'hset' command".to_string(),
+                    );
+                }
+
+                Protocol::HSet {
+                    key: params[1].to_string(),
+                    field: params[2].to_string(),
+                    value: params[3].to_string(),
                 }
             }
             "COMMAND" => Protocol::Command,
