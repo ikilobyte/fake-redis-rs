@@ -22,13 +22,28 @@ impl TString {
         ttl: Option<(TTL, usize)>,
         lock: Option<Lock>,
     ) -> Result<String, ()> {
-        println!("set {} {} ttl {:?} lock {:?} ", key, value, ttl, lock);
+        // TODO 过期时间
+        if let Some((ttl, second)) = ttl {
+            println!("{:#?}", ttl);
+            println!("{:#?}", second);
+        }
+
+        // TODO 处理锁
+        if let Some(t) = lock {}
+        self.inner.insert(key, value);
 
         Ok("+OK\r\n".to_string())
     }
 
     // https://redis.io/commands/get
-    pub fn get(&self) -> Result<String, ()> {
-        Ok("+OK\r\n".to_string())
+    pub fn get(&self, key: String) -> Result<String, ()> {
+        let resp = if let Some(val) = self.inner.get(&key) {
+            format!("${}\r\n{}\r\n", val.len(), val)
+        } else {
+            // nil
+            "$-1\r\n".to_string()
+        };
+
+        Ok(resp)
     }
 }
