@@ -61,6 +61,7 @@ impl Client {
                     }
                 }
                 protocol => {
+                    println!("client.id {} cmd {:?}", inner.id, protocol);
                     let resp = if let Ok(resp) = self.db.handle(protocol).await {
                         resp
                     } else {

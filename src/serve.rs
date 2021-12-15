@@ -48,6 +48,7 @@ impl Serve {
     // 处理连接
     pub async fn handle_connect(self, stream: TcpStream, socket_id: usize, db: DB) {
         let client = Client::new(socket_id, db);
+        println!("client new connect socket.id {}\r\n", socket_id);
 
         let (mut socket_reader, socket_writer) = stream.into_split();
 

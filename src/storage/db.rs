@@ -43,14 +43,9 @@ impl DB {
                 value,
                 ttl,
                 lock,
-            } => {
-                let x = inner.t_string.set(key, value, ttl, lock);
+            } => inner.t_string.set(key, value, ttl, lock),
 
-                x
-            }
-
-            // get命令
-            Protocol::Get { .. } => Ok("+OK\r\n".to_string()),
+            Protocol::Get { key } => inner.t_string.get(key),
             _ => Ok("+OK\r\n".to_string()),
         };
     }
