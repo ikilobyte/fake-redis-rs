@@ -60,7 +60,12 @@ impl Client {
                         break;
                     }
                 }
+
+                // 可以执行的类型
                 protocol => {
+                    // TODO 设置的类型是否符合之前的类型
+                    // TODO 之前是 string，在未被删除前，都是string类型，不能改变类型
+
                     println!("client.id {} cmd {:?}", inner.id, protocol);
                     let resp = if let Ok(resp) = self.db.handle(protocol).await {
                         resp

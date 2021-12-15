@@ -2,7 +2,6 @@ use crate::storage::db::DB;
 use anyhow::Error;
 
 mod client;
-// mod cmd;
 mod protocol;
 mod serve;
 mod storage;

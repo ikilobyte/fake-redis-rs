@@ -1,7 +1,8 @@
 use crate::protocol::Protocol;
 use crate::storage::hash::THash;
 use crate::storage::string::TString;
-use std::collections::HashSet;
+use crate::storage::types::KeyType;
+use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::{Mutex, MutexGuard};
 
@@ -10,12 +11,11 @@ use tokio::sync::{Mutex, MutexGuard};
 #[derive(Debug)]
 pub struct DB {
     pub inner: Arc<Mutex<Inner>>,
-    // pub inner: Inner,
 }
 
 #[derive(Debug)]
 pub struct Inner {
-    pub keys: HashSet<String>, // 保存所有的key
+    pub keys: HashMap<String, KeyType>, // 保存所有的key
     pub t_string: TString,
     pub t_hash: THash,
 }
@@ -24,7 +24,7 @@ impl DB {
     pub fn new() -> Self {
         Self {
             inner: Arc::new(Mutex::new(Inner {
-                keys: HashSet::new(),
+                keys: HashMap::new(),
                 t_string: TString::new(),
                 t_hash: THash::new(),
             })),
@@ -39,19 +39,34 @@ impl DB {
     pub async fn handle(&self, message: Protocol) -> Result<String, ()> {
         let mut inner = self.inner().await;
 
-        return match message {
-            // set命令
+        let mm = message.clone();
+        let resp = match message {
             Protocol::Set {
+                cmd: _cmd,
+                typ: _typ,
                 key,
                 value,
                 ttl,
                 lock,
             } => inner.t_string.set(key, value, ttl, lock),
 
-            Protocol::Get { key } => inner.t_string.get(key),
-            Protocol::HSet { key, field, value } => inner.t_hash.set(key, field, value),
+            Protocol::Get { cmd, key } => inner.t_string.get(key),
+            Protocol::HSet {
+                cmd,
+                key,
+                field,
+                value,
+            } => inner.t_hash.set(key, field, value),
             _ => Ok("+OK\r\n".to_string()),
         };
+
+        // 操作成功时，保存所有的key，和key对应的类型
+        if let Ok(_) = resp {
+            let key_type: KeyType = mm.into();
+            println!("key_type {:?}", key_type);
+        }
+
+        resp
     }
 }
 

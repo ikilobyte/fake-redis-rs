@@ -1,10 +1,15 @@
-#[derive(Debug)]
+use crate::storage::types::KeyType;
+use std::any::Any;
+
+#[derive(Debug, Clone)]
 pub enum Protocol {
     // 暂时不做什么处理，只用来处理连接
     Command,
 
     // set key value [EX seconds] [PX milliseconds] [NX|XX]
     Set {
+        cmd: String,
+        typ: KeyType,
         key: String,               // key
         value: String,             // value
         ttl: Option<(TTL, usize)>, // 过期时间
@@ -13,11 +18,13 @@ pub enum Protocol {
 
     // get key
     Get {
+        cmd: String,
         key: String, // 获取哪个key
     },
 
     // hset key field value
     HSet {
+        cmd: String,
         key: String,
         field: String,
         value: String,
@@ -26,13 +33,13 @@ pub enum Protocol {
     Error(String),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum TTL {
     EX,
     PX,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Lock {
     NX, // 只在键不存在时， 才对键进行设置操作
     XX, // 只在键已经存在时， 才对键进行设置操作。
@@ -63,6 +70,8 @@ impl From<Vec<String>> for Protocol {
                 }
 
                 let set_cmd = Protocol::Set {
+                    cmd: "SET".to_string(),
+                    typ: KeyType::String,
                     key: params[1].to_string(),
                     value: params[2].to_string(),
                     ttl: ttl.unwrap(),
@@ -77,6 +86,7 @@ impl From<Vec<String>> for Protocol {
                     return Protocol::Error("ERR syntax error".to_string());
                 }
                 Protocol::Get {
+                    cmd: "GET".to_string(),
                     key: params[1].to_string(),
                 }
             }
@@ -88,6 +98,7 @@ impl From<Vec<String>> for Protocol {
                 }
 
                 Protocol::HSet {
+                    cmd: "HSET".to_string(),
                     key: params[1].to_string(),
                     field: params[2].to_string(),
                     value: params[3].to_string(),
@@ -132,7 +143,10 @@ impl Parser {
             }
         }
 
-        return values.into();
+        let protocol = values.into();
+
+        println!("{:#?}", protocol);
+        return protocol;
     }
 
     // 解析出get命令参数中的ttl参数
