@@ -40,7 +40,7 @@ impl From<Vec<String>> for Protocol {
 
         //
         let cmd = &params[0][..];
-        println!("cmd -> {}", cmd);
+        // println!("cmd -> {}", cmd);
         return match cmd {
             "SET" => {
                 // 获取过期时间
@@ -64,9 +64,15 @@ impl From<Vec<String>> for Protocol {
 
                 return set_cmd;
             }
-            "GET" => Protocol::Get {
-                key: params[1].to_string(),
-            },
+            "GET" => {
+                // 语法错误
+                if params.len() > 2 {
+                    return Protocol::Error("ERR syntax error".to_string());
+                }
+                Protocol::Get {
+                    key: params[1].to_string(),
+                }
+            }
             "COMMAND" => Protocol::Command,
             _ => Protocol::UnSupport,
         };

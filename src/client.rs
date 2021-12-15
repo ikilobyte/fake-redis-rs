@@ -1,4 +1,5 @@
 use crate::protocol::Protocol;
+use crate::DB;
 use std::sync::Arc;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::tcp::{OwnedReadHalf, OwnedWriteHalf, ReadHalf, WriteHalf};
@@ -12,6 +13,7 @@ type Sender = UnboundedSender<Protocol>;
 pub struct Client {
     inner: Arc<Mutex<Inner>>,
     pub sender: UnboundedSender<Protocol>,
+    db: DB,
 }
 
 #[derive(Debug)]
@@ -21,13 +23,14 @@ pub struct Inner {
 }
 
 impl Client {
-    pub fn new(id: usize) -> Self {
+    pub fn new(id: usize, db: DB) -> Self {
         // 用于内部转发逻辑处理
         let (sender, reader) = tokio::sync::mpsc::unbounded_channel();
 
         Self {
             inner: Arc::new(Mutex::new(Inner { id, reader })),
             sender,
+            db,
         }
     }
 
@@ -49,19 +52,15 @@ impl Client {
                 Protocol::Command => {
                     socket_writer.write(b"+OK\r\n").await;
                 }
-                Protocol::Set {
-                    key,
-                    value,
-                    ttl,
-                    lock,
-                } => {
-                    println!("{:#?}", "set cmd");
+                Protocol::UnSupport => {
+                    socket_writer.write(b"-command unsupport\r\n").await;
                 }
-                Protocol::Get { .. } => {}
-                Protocol::UnSupport => {}
                 Protocol::Error(mut e) => {
                     let err = format!("-{}\r\n", e);
                     socket_writer.write(err.as_bytes()).await;
+                }
+                protocol => {
+                    println!("protocol -> {:#?}", protocol);
                 }
             }
         }
