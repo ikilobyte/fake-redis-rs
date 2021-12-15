@@ -32,10 +32,27 @@ impl DB {
         self.inner.lock().await
     }
 
-    pub async fn save(&mut self, message: Protocol) {
+    // 处理传过来的数据
+    pub async fn handle(&self, message: Protocol) -> Result<String, ()> {
         let mut inner = self.inner().await;
-        println!("{:#?}", inner);
-        println!("保存数据 {:?}", message);
+
+        return match message {
+            // set命令
+            Protocol::Set {
+                key,
+                value,
+                ttl,
+                lock,
+            } => {
+                let x = inner.t_string.set(key, value, ttl, lock);
+
+                x
+            }
+
+            // get命令
+            Protocol::Get { .. } => Ok("+OK\r\n".to_string()),
+            _ => Ok("+OK\r\n".to_string()),
+        };
     }
 }
 

@@ -1,5 +1,3 @@
-use anyhow::Error;
-
 #[derive(Debug)]
 pub enum Protocol {
     // 暂时不做什么处理，只用来处理连接

@@ -1,13 +1,10 @@
 use crate::protocol::Protocol;
 use crate::DB;
 use std::sync::Arc;
-use tokio::io::{AsyncReadExt, AsyncWriteExt};
-use tokio::net::tcp::{OwnedReadHalf, OwnedWriteHalf, ReadHalf, WriteHalf};
-use tokio::net::TcpStream;
+use tokio::io::AsyncWriteExt;
+use tokio::net::tcp::OwnedWriteHalf;
 use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
 use tokio::sync::{Mutex, MutexGuard};
-
-type Sender = UnboundedSender<Protocol>;
 
 #[derive(Debug, Clone)]
 pub struct Client {
@@ -39,28 +36,42 @@ impl Client {
         self.inner.lock().await
     }
 
-    // 处理socket的消息
-    pub async fn rev_socket_message(self, socket_reader: OwnedReadHalf) {
-        println!("{:#?}", socket_reader);
-    }
-
     // 接收通道的消息
     pub async fn rev_forward_message(self, mut socket_writer: OwnedWriteHalf) {
         let mut inner = self.inner().await;
         while let Some(protocol) = inner.reader.recv().await {
             match protocol {
                 Protocol::Command => {
-                    socket_writer.write(b"+OK\r\n").await;
+                    if let Err(e) = socket_writer.write(b"+OK\r\n").await {
+                        println!("client establish connection  write error -> {:#?}", e);
+                        break;
+                    }
                 }
                 Protocol::UnSupport => {
-                    socket_writer.write(b"-command unsupport\r\n").await;
+                    if let Err(e) = socket_writer.write(b"-command unsupport\r\n").await {
+                        println!("Protocol::UnSupport write error -> {:#?}", e);
+                        break;
+                    }
                 }
-                Protocol::Error(mut e) => {
+                Protocol::Error(e) => {
                     let err = format!("-{}\r\n", e);
-                    socket_writer.write(err.as_bytes()).await;
+                    if let Err(e) = socket_writer.write(err.as_bytes()).await {
+                        println!("Protocol::Error write error -> {:#?}", e);
+                        break;
+                    }
                 }
                 protocol => {
-                    println!("protocol -> {:#?}", protocol);
+                    let resp = if let Ok(resp) = self.db.handle(protocol).await {
+                        resp
+                    } else {
+                        "-Internal Server Error\r\n".to_string()
+                    };
+
+                    // 写数据错误应该是连接都断开了
+                    if let Err(x) = socket_writer.write(resp.as_bytes()).await {
+                        println!("socket write error {:?}", x);
+                        break;
+                    }
                 }
             }
         }

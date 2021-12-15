@@ -1,10 +1,9 @@
 use crate::client::Client;
-use crate::protocol::{Parser, Protocol};
+use crate::protocol::Parser;
 use crate::DB;
 use anyhow::Error;
-use bytes::{Bytes, BytesMut};
-use tokio::io::{AsyncBufReadExt, AsyncReadExt, AsyncWriteExt, BufReader};
-use tokio::net::tcp::{ReadHalf, WriteHalf};
+use bytes::BytesMut;
+use tokio::io::AsyncReadExt;
 use tokio::net::{TcpListener, TcpStream};
 
 #[derive(Clone, Debug)]
@@ -33,7 +32,7 @@ impl Serve {
         let listener = TcpListener::bind(format!("{}:{}", self.host, self.port)).await?;
 
         loop {
-            if let Ok((mut stream, _)) = listener.accept().await {
+            if let Ok((stream, _)) = listener.accept().await {
                 // 生成一个新的ID
                 let socket_id = self.incr_socket_id();
                 let db = db.clone();
@@ -43,14 +42,14 @@ impl Serve {
             }
         }
 
-        Ok(())
+        // Ok(())
     }
 
     // 处理连接
-    pub async fn handle_connect(self, mut stream: TcpStream, socket_id: usize, db: DB) {
+    pub async fn handle_connect(self, stream: TcpStream, socket_id: usize, db: DB) {
         let client = Client::new(socket_id, db);
 
-        let (mut socket_reader, mut socket_writer) = stream.into_split();
+        let (mut socket_reader, socket_writer) = stream.into_split();
 
         // 处理通道消息
         tokio::spawn(client.clone().rev_forward_message(socket_writer));
@@ -69,7 +68,10 @@ impl Serve {
                 let protocol = Parser::start(content.clone());
 
                 // 转发出去
-                client.sender.send(protocol);
+                if let Err(e) = client.sender.send(protocol) {
+                    println!("client.sender.send error {:?}", e);
+                    continue;
+                }
             }
         }
 
