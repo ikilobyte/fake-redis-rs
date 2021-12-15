@@ -57,7 +57,8 @@ impl Serve {
 
         loop {
             // 使用Bytes可以读取一个完整的数据
-            let mut buffer = BytesMut::new();
+            // TODO 数据过长会有问题
+            let mut buffer = BytesMut::with_capacity(1024 * 10);
             if let Ok(_) = socket_reader.read_buf(&mut buffer).await {
                 // 退出了
                 if buffer.is_empty() {
