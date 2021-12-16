@@ -36,7 +36,7 @@ impl DB {
     }
 
     // 处理传过来的数据
-    pub async fn handle(&self, message: Protocol) -> Result<String, ()> {
+    pub async fn handle(&self, message: Protocol, key: String) -> Result<String, ()> {
         let mut inner = self.inner().await;
 
         let mm = message.clone();
@@ -62,8 +62,7 @@ impl DB {
 
         // 操作成功时，保存所有的key，和key对应的类型
         if let Ok(_) = resp {
-            let key_type: KeyType = mm.into();
-            println!("key_type {:?}", key_type);
+            inner.keys.insert(key, mm.into());
         }
 
         resp

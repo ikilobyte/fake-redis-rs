@@ -67,11 +67,10 @@ impl Serve {
 
                 let content = String::from_utf8_lossy(&buffer.to_vec()[..]).to_string();
 
-                println!("{:#?}", content);
-                let protocol = Parser::start(content);
+                let (protocol, key) = Parser::start(content);
 
                 // 转发出去
-                if let Err(e) = client.sender.send(protocol) {
+                if let Err(e) = client.sender.send((protocol, key)) {
                     println!("client.sender.send error {:?}", e);
                     continue;
                 }

@@ -9,14 +9,14 @@ use tokio::sync::{Mutex, MutexGuard};
 #[derive(Debug, Clone)]
 pub struct Client {
     inner: Arc<Mutex<Inner>>,
-    pub sender: UnboundedSender<Protocol>,
+    pub sender: UnboundedSender<(Protocol, String)>,
     db: DB,
 }
 
 #[derive(Debug)]
 pub struct Inner {
     pub id: usize,
-    pub reader: UnboundedReceiver<Protocol>,
+    pub reader: UnboundedReceiver<(Protocol, String)>,
 }
 
 impl Client {
@@ -39,7 +39,7 @@ impl Client {
     // 接收通道的消息
     pub async fn rev_forward_message(self, mut socket_writer: OwnedWriteHalf) {
         let mut inner = self.inner().await;
-        while let Some(protocol) = inner.reader.recv().await {
+        while let Some((protocol, key)) = inner.reader.recv().await {
             match protocol {
                 Protocol::Command => {
                     if let Err(e) = socket_writer.write(b"+OK\r\n").await {
@@ -65,9 +65,7 @@ impl Client {
                 protocol => {
                     // TODO 设置的类型是否符合之前的类型
                     // TODO 之前是 string，在未被删除前，都是string类型，不能改变类型
-
-                    println!("client.id {} cmd {:?}", inner.id, protocol);
-                    let resp = if let Ok(resp) = self.db.handle(protocol).await {
+                    let resp = if let Ok(resp) = self.db.handle(protocol, key).await {
                         resp
                     } else {
                         "-Internal Server Error\r\n".to_string()
