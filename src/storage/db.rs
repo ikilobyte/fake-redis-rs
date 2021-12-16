@@ -93,7 +93,7 @@ impl DB {
         resp
     }
 
-    // del命令
+    // https://redis.io/commands/del
     fn del(&self, inner: &mut MutexGuard<'_, Inner>, keys: Vec<String>) -> Result<String, ()> {
         let mut count = 0;
 
