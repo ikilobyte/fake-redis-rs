@@ -34,8 +34,9 @@ impl From<Protocol> for KeyType {
     fn from(msg: Protocol) -> Self {
         match msg {
             Protocol::Set { typ, .. } => typ,
-            Protocol::Get { .. } => KeyType::String,
-            Protocol::HSet { .. } => KeyType::Hash,
+            Protocol::Get { typ, .. } => typ,
+            Protocol::HSet { typ, .. } => typ,
+            Protocol::HGet { typ, .. } => typ,
 
             // 根本不会执行到这里，所以这个panic也根本就不会执行！
             _ => panic!(""),

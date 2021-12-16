@@ -8,7 +8,6 @@ pub enum Protocol {
 
     // set key value [EX seconds] [PX milliseconds] [NX|XX]
     Set {
-        cmd: String,
         typ: KeyType,
         key: String,               // key
         value: String,             // value
@@ -18,16 +17,23 @@ pub enum Protocol {
 
     // get key
     Get {
-        cmd: String,
+        typ: KeyType,
         key: String, // 获取哪个key
     },
 
     // hset key field value
     HSet {
-        cmd: String,
+        typ: KeyType,
         key: String,
         field: String,
         value: String,
+    },
+
+    // hget key field
+    HGet {
+        typ: KeyType,
+        key: String,
+        field: String,
     },
     UnSupport,
     Error(String),
@@ -71,7 +77,6 @@ impl From<Vec<String>> for Protocol {
                 }
 
                 let set_cmd = Protocol::Set {
-                    cmd: "SET".to_string(),
                     typ: KeyType::String,
                     key: params[1].to_string(),
                     value: params[2].to_string(),
@@ -87,7 +92,7 @@ impl From<Vec<String>> for Protocol {
                     return Protocol::Error("ERR syntax error".to_string());
                 }
                 Protocol::Get {
-                    cmd: "GET".to_string(),
+                    typ: KeyType::String,
                     key: params[1].to_string(),
                 }
             }
@@ -99,10 +104,23 @@ impl From<Vec<String>> for Protocol {
                 }
 
                 Protocol::HSet {
-                    cmd: "HSET".to_string(),
+                    typ: KeyType::String,
                     key: params[1].to_string(),
                     field: params[2].to_string(),
                     value: params[3].to_string(),
+                }
+            }
+            "HGET" => {
+                if params.len() != 3 {
+                    return Protocol::Error(
+                        "ERR wrong number of arguments for 'hget' command".to_string(),
+                    );
+                }
+
+                Protocol::HGet {
+                    typ: KeyType::Hash,
+                    key: params[1].to_string(),
+                    field: params[2].to_string(),
                 }
             }
             "COMMAND" => Protocol::Command,

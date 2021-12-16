@@ -42,7 +42,6 @@ impl DB {
         let mm = message.clone();
         let resp = match message {
             Protocol::Set {
-                cmd: _cmd,
                 typ: _typ,
                 key,
                 value,
@@ -50,13 +49,14 @@ impl DB {
                 lock,
             } => inner.t_string.set(key, value, ttl, lock),
 
-            Protocol::Get { cmd, key } => inner.t_string.get(key),
+            Protocol::Get { typ, key } => inner.t_string.get(key),
             Protocol::HSet {
-                cmd,
+                typ,
                 key,
                 field,
                 value,
             } => inner.t_hash.set(key, field, value),
+            Protocol::HGet { typ, key, field } => inner.t_hash.get(key, field),
             _ => Ok("+OK\r\n".to_string()),
         };
 
@@ -64,6 +64,8 @@ impl DB {
         if let Ok(_) = resp {
             inner.keys.insert(key, mm.into());
         }
+
+        println!("{:#?}", inner.keys);
 
         resp
     }

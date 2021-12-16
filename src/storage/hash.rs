@@ -31,4 +31,17 @@ impl THash {
 
         Ok(format!(":{}\r\n", count).to_string())
     }
+
+    // https://redis.io/commands/hget
+    pub fn get(&self, key: String, field: String) -> Result<String, ()> {
+        let resp = match self.inner.get(&key) {
+            None => format!("$-1\r\n"),
+            Some(map) => match map.get(&field) {
+                None => format!("$-1\r\n"),
+                Some(x) => format!("${}\r\n{}\r\n", x.len(), x),
+            },
+        };
+
+        Ok(resp)
+    }
 }
