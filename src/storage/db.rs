@@ -40,9 +40,19 @@ impl DB {
         let mut inner = self.inner().await;
 
         let mm = message.clone();
+        let typ = mm.into();
+
+        // 判断cmd
+        if !self.check_typ_unanimous(&inner, &key, &typ) {
+            return Ok(
+                "-WRONGTYPE Operation against a key holding the wrong kind of value\r\n"
+                    .to_string(),
+            );
+        }
+
         let resp = match message {
             Protocol::Set {
-                typ: _typ,
+                typ,
                 key,
                 value,
                 ttl,
@@ -61,13 +71,33 @@ impl DB {
         };
 
         // 操作成功时，保存所有的key，和key对应的类型
-        if let Ok(_) = resp {
-            inner.keys.insert(key, mm.into());
+        // TODO 只有set类型的才需要保存，get类型的不需要
+        if let Ok(ref x) = resp {
+            inner.keys.insert(key, typ);
         }
 
         println!("{:#?}", inner.keys);
 
+        println!("{:#?}", self.inner);
         resp
+    }
+
+    // 检测类型是否一致
+    fn check_typ_unanimous(
+        &self,
+        inner: &MutexGuard<'_, Inner>,
+        key: &String,
+        cmd_typ: &KeyType,
+    ) -> bool {
+        if let Some(real_typ) = inner.keys.get(key) {
+            if real_typ == cmd_typ {
+                return true;
+            }
+        } else {
+            return true;
+        }
+
+        false
     }
 }
 
