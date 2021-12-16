@@ -11,8 +11,9 @@ pub struct Serve {
     host: String,
     port: u16,
     socket_id: usize,
-    buffer: Vec<u8>,
+    bytes: Vec<u8>,
     cursor: usize,
+    param_number: usize,
 }
 
 impl Serve {
@@ -21,8 +22,9 @@ impl Serve {
             host,
             port,
             socket_id: 0,
-            buffer: vec![0; 100],
+            bytes: Vec::new(),
             cursor: 0,
+            param_number: 0,
         }
     }
 
@@ -61,19 +63,71 @@ impl Serve {
 
         let mut count = 1;
 
-        // 获取到第一个*，然后开始解析这一行的数据
-        let mut lines: Vec<String> = vec![];
-        let bytes: Vec<&str> = Vec::new();
+        let mut lines: Vec<String> = Vec::new();
 
         loop {
             // 使用Bytes可以读取一个完整的数据
             println!("第{}次读取! start", count);
-            match socket_reader.read(&mut self.buffer).await {
+            let mut buffer = vec![0; 6];
+            match socket_reader.read(&mut buffer).await {
                 Ok(0) => {
-                    println!("{:?}", self.buffer);
+                    println!("{:?}", buffer);
                     break;
                 }
                 Ok(_) => {
+                    // 缓存到一个地方去
+                    self.bytes.extend(buffer.clone().iter().filter(|item| {
+                        if **item > 0 {
+                            true
+                        } else {
+                            false
+                        }
+                    }));
+                    println!("bytes {:?} len {}", self.bytes, self.bytes.len());
+
+                    // 解析出数据
+                    for i in 0..self.bytes.len() {
+                        if i >= self.bytes.len() - 1 {
+                            break;
+                        }
+                        let byte = self.bytes[i];
+                        let next_byte = self.bytes[i + 1];
+
+                        // 解析出一行
+                        if byte == b'\r' && next_byte == b'\n' {
+                            println!("cursor {} i {} len {}", self.cursor, i, self.bytes.len());
+
+                            // 这里有bug
+                            let ref param = self.bytes[self.cursor..i];
+
+                            // 记录有几个参数
+                            if param[0] == b'*' {
+                                self.param_number = String::from_utf8_lossy(&param[1..])
+                                    .parse::<usize>()
+                                    .unwrap();
+                                self.cursor = i + 2;
+                            } else {
+                                let str = String::from_utf8_lossy(&param).to_string();
+                                lines.push(str);
+                                self.cursor = i + 2;
+                            }
+
+                            if lines.len() == self.param_number * 2 {
+                                self.cursor = 0;
+                                println!("读取到了完整的数据");
+                                println!("{:#?}", lines);
+                                break;
+                            }
+
+                            println!(
+                                "i+2 {} cursor {} len {}",
+                                i + 2,
+                                self.cursor,
+                                self.bytes.len()
+                            );
+                        }
+                    }
+
                     socket_writer.write(b"+OK\r\n").await;
                 }
                 Err(e) => {
