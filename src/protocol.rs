@@ -104,7 +104,7 @@ impl From<Vec<String>> for Protocol {
                 }
 
                 Protocol::HSet {
-                    typ: KeyType::String,
+                    typ: KeyType::Hash,
                     key: params[1].to_string(),
                     field: params[2].to_string(),
                     value: params[3].to_string(),
