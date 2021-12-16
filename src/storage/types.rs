@@ -26,6 +26,7 @@ impl From<Protocol> for KeyType {
             Protocol::HSet { typ, .. } => typ,
             Protocol::HGet { typ, .. } => typ,
             Protocol::HDel { typ, .. } => typ,
+            Protocol::Del { typ, .. } => typ,
 
             // 根本不会执行到这里，所以这个panic也根本就不会执行！
             _ => panic!(""),

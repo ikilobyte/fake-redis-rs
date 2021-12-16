@@ -46,4 +46,13 @@ impl TString {
 
         Ok(resp)
     }
+
+    // 内部删除key
+    pub fn remove(&mut self, key: &str) -> bool {
+        if let Some(_) = self.inner.remove(key) {
+            return true;
+        }
+
+        return false;
+    }
 }

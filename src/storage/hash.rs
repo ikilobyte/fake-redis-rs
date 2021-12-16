@@ -74,4 +74,12 @@ impl THash {
 
         Ok(resp)
     }
+
+    // 内部删除
+    pub fn remove(&mut self, key: &str) -> bool {
+        if let Some(_) = self.inner.remove(key) {
+            return true;
+        }
+        false
+    }
 }

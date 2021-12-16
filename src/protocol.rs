@@ -42,6 +42,12 @@ pub enum Protocol {
         key: String,
         fields: Vec<String>,
     },
+
+    // del key [key ...]
+    Del {
+        typ: KeyType,
+        keys: Vec<String>,
+    },
     UnSupport,
     Error(String),
 }
@@ -141,6 +147,19 @@ impl From<Vec<String>> for Protocol {
                     typ: KeyType::Hash,
                     key: params[1].clone(),
                     fields: params[2..].to_vec(),
+                }
+            }
+            "DEL" => {
+                if params.len() < 2 {
+                    return Protocol::Error(
+                        "ERR wrong number of arguments for 'del' command".to_string(),
+                    );
+                }
+
+                println!("{:#?}", params);
+                Protocol::Del {
+                    typ: KeyType::String,
+                    keys: params[1..].to_vec(),
                 }
             }
             "COMMAND" => Protocol::Command,
