@@ -70,12 +70,13 @@ impl DB {
             } => inner.t_hash.set(key, field, value),
             Protocol::HGet { typ, key, field } => inner.t_hash.get(key, field),
             Protocol::HDel { typ, key, fields } => {
-                println!("{:#?}", fields);
+                let resp = inner.t_hash.del(key.clone(), fields);
 
-                // 需要删除这个key
-                println!("{:#?}", key);
-
-                inner.t_hash.del(key, fields)
+                // field中的数据全部被删除，那就需要删除keys中的数据
+                if let None = inner.t_hash.inner.get(&key[..]) {
+                    self.remove(&mut inner, &key[..]);
+                }
+                resp
             }
             Protocol::Del { typ, keys } => self.del(&mut inner, keys),
             _ => Ok("+OK\r\n".to_string()),
