@@ -64,7 +64,7 @@ impl THash {
 
                     // 删除最外层的key
                     if map.len() <= 0 {
-                        self.inner.remove(&key);
+                        self.remove(&key);
                     }
 
                     format!(":{}\r\n", count)
