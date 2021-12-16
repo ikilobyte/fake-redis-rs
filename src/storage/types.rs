@@ -5,6 +5,9 @@ use std::collections::HashMap;
 // 所有"写"操作的命令
 pub static WRITE_CMD: [&str; 2] = ["SET", "HSET"];
 
+// 所有"删"操作的命令
+pub static DELETE_CMD: [&str; 2] = ["DEL", "HDEL"];
+
 // redis的五种数据类型
 #[derive(Clone, Debug, PartialEq)]
 pub enum KeyType {
@@ -22,6 +25,7 @@ impl From<Protocol> for KeyType {
             Protocol::Get { typ, .. } => typ,
             Protocol::HSet { typ, .. } => typ,
             Protocol::HGet { typ, .. } => typ,
+            Protocol::HDel { typ, .. } => typ,
 
             // 根本不会执行到这里，所以这个panic也根本就不会执行！
             _ => panic!(""),

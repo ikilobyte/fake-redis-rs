@@ -12,6 +12,7 @@ impl THash {
     pub fn new() -> Self {
         Self {
             inner: HashData::new(),
+            // observer: String,
         }
     }
 
@@ -40,6 +41,35 @@ impl THash {
                 None => format!("$-1\r\n"),
                 Some(x) => format!("${}\r\n{}\r\n", x.len(), x),
             },
+        };
+
+        Ok(resp)
+    }
+
+    // https://redis.io/commands/hdel
+    pub fn del(&mut self, key: String, fields: Vec<String>) -> Result<String, ()> {
+        let mut count = 0;
+
+        let resp = match self.inner.get_mut(&key) {
+            None => format!(":0\r\n"),
+            Some(map) => {
+                if map.len() <= 0 {
+                    format!(":0\r\n")
+                } else {
+                    for field in fields.iter() {
+                        if let Some(x) = map.remove(field) {
+                            count += 1;
+                        }
+                    }
+
+                    // 删除最外层的key
+                    if map.len() <= 0 {
+                        self.inner.remove(&key);
+                    }
+
+                    format!(":{}\r\n", count)
+                }
+            }
         };
 
         Ok(resp)

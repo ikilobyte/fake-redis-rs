@@ -35,6 +35,13 @@ pub enum Protocol {
         key: String,
         field: String,
     },
+
+    // hdel key field [field ...]
+    HDel {
+        typ: KeyType,
+        key: String,
+        fields: Vec<String>,
+    },
     UnSupport,
     Error(String),
 }
@@ -121,6 +128,19 @@ impl From<Vec<String>> for Protocol {
                     typ: KeyType::Hash,
                     key: params[1].to_string(),
                     field: params[2].to_string(),
+                }
+            }
+            "HDEL" => {
+                if params.len() < 3 {
+                    return Protocol::Error(
+                        "ERR wrong number of arguments for 'hdel' command".to_string(),
+                    );
+                }
+
+                Protocol::HDel {
+                    typ: KeyType::Hash,
+                    key: params[1].clone(),
+                    fields: params[2..].to_vec(),
                 }
             }
             "COMMAND" => Protocol::Command,

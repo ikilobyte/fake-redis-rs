@@ -68,6 +68,7 @@ impl DB {
                 value,
             } => inner.t_hash.set(key, field, value),
             Protocol::HGet { typ, key, field } => inner.t_hash.get(key, field),
+            Protocol::HDel { typ, key, fields } => inner.t_hash.del(key, fields),
             _ => Ok("+OK\r\n".to_string()),
         };
 
