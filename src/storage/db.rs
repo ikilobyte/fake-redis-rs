@@ -69,7 +69,14 @@ impl DB {
                 value,
             } => inner.t_hash.set(key, field, value),
             Protocol::HGet { typ, key, field } => inner.t_hash.get(key, field),
-            Protocol::HDel { typ, key, fields } => inner.t_hash.del(key, fields),
+            Protocol::HDel { typ, key, fields } => {
+                println!("{:#?}", fields);
+
+                // 需要删除这个key
+                println!("{:#?}", key);
+
+                inner.t_hash.del(key, fields)
+            }
             Protocol::Del { typ, keys } => self.del(&mut inner, keys),
             _ => Ok("+OK\r\n".to_string()),
         };
@@ -98,18 +105,14 @@ impl DB {
                 match key_type {
                     KeyType::String => {
                         // string内部删除
-                        if inner.t_string.remove(&key[..]) {
-                            if let Some(_) = inner.keys.remove(&key[..]) {
-                                count += 1;
-                            }
+                        if inner.t_string.remove(&key[..]) && self.remove(inner, &key[..]) {
+                            count += 1;
                         }
                     }
                     KeyType::Hash => {
                         // hash内部删除
-                        if inner.t_hash.remove(&key[..]) {
-                            if let Some(_) = inner.keys.remove(&key[..]) {
-                                count += 1;
-                            }
+                        if inner.t_hash.remove(&key[..]) && self.remove(inner, &key[..]) {
+                            count += 1;
                         }
                     }
                     KeyType::List => {}
@@ -135,7 +138,6 @@ impl DB {
             return true;
         }
 
-        //todo 删除类型的命令不需要判断！
         if let Some(real_typ) = inner.keys.get(key) {
             if real_typ == cmd_typ {
                 return true;
@@ -144,6 +146,14 @@ impl DB {
             return true;
         }
 
+        false
+    }
+
+    // 内部删除
+    fn remove(&self, inner: &mut MutexGuard<'_, Inner>, key: &str) -> bool {
+        if let Some(_) = inner.keys.remove(key) {
+            return true;
+        }
         false
     }
 }
