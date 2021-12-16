@@ -1,7 +1,7 @@
 use crate::protocol::Protocol;
 use crate::storage::hash::THash;
 use crate::storage::string::TString;
-use crate::storage::types::KeyType;
+use crate::storage::types::{KeyType, Message, WRITE_CMD};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::{Mutex, MutexGuard};
@@ -36,21 +36,22 @@ impl DB {
     }
 
     // 处理传过来的数据
-    pub async fn handle(&self, message: Protocol, key: String) -> Result<String, ()> {
+    pub async fn handle(&self, message: Message) -> Result<String, ()> {
         let mut inner = self.inner().await;
 
-        let mm = message.clone();
-        let typ = mm.into();
+        let key = message.key.clone();
+        let protocol = message.protocol.clone();
+        let key_type = protocol.clone().into();
 
         // 判断cmd
-        if !self.check_typ_unanimous(&inner, &key, &typ) {
+        if !self.check_typ_unanimous(&inner, &key, &key_type) {
             return Ok(
                 "-WRONGTYPE Operation against a key holding the wrong kind of value\r\n"
                     .to_string(),
             );
         }
 
-        let resp = match message {
+        let resp = match protocol {
             Protocol::Set {
                 typ,
                 key,
@@ -70,15 +71,14 @@ impl DB {
             _ => Ok("+OK\r\n".to_string()),
         };
 
-        // 操作成功时，保存所有的key，和key对应的类型
-        // TODO 只有set类型的才需要保存，get类型的不需要
-        if let Ok(ref x) = resp {
-            inner.keys.insert(key, typ);
+        // 只有是"写"类型的命令才能保存
+        if WRITE_CMD.contains(&&message.cmd[..]) {
+            if let Ok(_) = resp {
+                inner.keys.insert(key, key_type);
+            }
         }
 
         println!("{:#?}", inner.keys);
-
-        println!("{:#?}", self.inner);
         resp
     }
 
@@ -89,6 +89,7 @@ impl DB {
         key: &String,
         cmd_typ: &KeyType,
     ) -> bool {
+        //todo 删除类型的命令不需要判断！
         if let Some(real_typ) = inner.keys.get(key) {
             if real_typ == cmd_typ {
                 return true;

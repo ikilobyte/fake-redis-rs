@@ -1,4 +1,4 @@
-use crate::storage::types::KeyType;
+use crate::storage::types::{KeyType, Message};
 use std::any::Any;
 
 #[derive(Debug, Clone)]
@@ -134,13 +134,13 @@ pub struct Parser;
 impl Parser {
     // 解析redis协议
     // 参考：https://www.jianshu.com/p/f670dfc9409b
-    pub fn start(bytes: String) -> (Protocol, String) {
+    pub fn start(bytes: String) -> Result<Message, ()> {
         // 命令可能会有大小写不一致的，
         // key是大小写铭感的，A、a是两个key
         // ["*4", "$4", "HsEt", "$3", "Map", "$2", "u2", "$6", "111111", ""]
         let params = bytes.split("\r\n").collect::<Vec<&str>>();
         if params.len() < 2 {
-            return (Protocol::UnSupport, "".to_string());
+            return Err(());
         }
 
         // 下标2是固定的命令位置，且统一为大写字母
@@ -164,17 +164,19 @@ impl Parser {
 
         // 最少需要2个参数，一个cmd，一个参数
         if values.len() < 2 {
-            return (
-                Protocol::Error("ERR syntax error".to_string()),
-                "".to_string(),
-            );
+            return Err(());
         }
 
         // 下标为1的一定是key
+        let cmd = values[0].clone();
         let key = values[1].clone();
-        let protocol = values.into();
 
-        return (protocol, key);
+        // 返回一个结构体出去
+        return Ok(Message {
+            protocol: values.into(),
+            key,
+            cmd,
+        });
     }
 
     // 解析出get命令参数中的ttl参数
