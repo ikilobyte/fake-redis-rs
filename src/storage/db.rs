@@ -1,8 +1,7 @@
 use crate::config::WRITE_CMD;
-use crate::protocol::Protocol;
+use crate::protocol::{KeyType, Message, Protocol};
 use crate::storage::hash::THash;
 use crate::storage::string::TString;
-use crate::storage::types::{KeyType, Message};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::{Mutex, MutexGuard};

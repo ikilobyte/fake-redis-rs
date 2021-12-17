@@ -1,6 +1,5 @@
 use crate::config::PARSE_LIST;
-use crate::protocol::Protocol;
-use crate::storage::types::Message;
+use crate::protocol::{Message, Protocol};
 
 pub mod command;
 pub mod del;

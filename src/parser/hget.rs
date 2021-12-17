@@ -1,5 +1,4 @@
-use crate::protocol::Protocol;
-use crate::storage::types::KeyType;
+use crate::protocol::{KeyType, Protocol};
 
 // hget key field
 pub fn transform(param: Vec<String>) -> Protocol {
