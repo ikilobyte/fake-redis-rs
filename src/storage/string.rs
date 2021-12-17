@@ -29,7 +29,7 @@ impl TString {
         }
 
         // TODO 处理锁
-        if let Some(t) = lock {}
+        if let Some(_) = lock {}
         self.inner.insert(key, value);
 
         Ok("+OK\r\n".to_string())

@@ -54,22 +54,26 @@ impl DB {
 
         let resp = match protocol {
             Protocol::Set {
-                typ,
+                typ: _,
                 key,
                 value,
                 ttl,
                 lock,
             } => inner.t_string.set(key, value, ttl, lock),
 
-            Protocol::Get { typ, key } => inner.t_string.get(key),
+            Protocol::Get { typ: _, key } => inner.t_string.get(key),
             Protocol::HSet {
-                typ,
+                typ: _,
                 key,
                 field,
                 value,
             } => inner.t_hash.set(key, field, value),
-            Protocol::HGet { typ, key, field } => inner.t_hash.get(key, field),
-            Protocol::HDel { typ, key, fields } => {
+            Protocol::HGet { typ: _, key, field } => inner.t_hash.get(key, field),
+            Protocol::HDel {
+                typ: _,
+                key,
+                fields,
+            } => {
                 let resp = inner.t_hash.del(key.clone(), fields);
 
                 // field中的数据全部被删除，那就需要删除keys中的数据
@@ -78,7 +82,7 @@ impl DB {
                 }
                 resp
             }
-            Protocol::Del { typ, keys } => self.del(&mut inner, keys),
+            Protocol::Del { typ: _, keys } => self.del(&mut inner, keys),
             _ => Ok("+OK\r\n".to_string()),
         };
 

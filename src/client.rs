@@ -53,7 +53,9 @@ impl Client {
         let mut inner = self.inner().await;
         while let Some(resp) = inner.reader.recv().await {
             if let Err(_) = resp {
-                socket_writer.write(b"-ERR syntax error\r\n").await;
+                if let Err(e) = socket_writer.write(b"-command unsupport\r\n").await {
+                    println!("Protocol::UnSupport write error -> {:#?}", e);
+                }
                 continue;
             }
 

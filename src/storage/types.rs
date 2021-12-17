@@ -1,6 +1,4 @@
 use crate::protocol::Protocol;
-use lazy_static::lazy_static;
-use std::collections::HashMap;
 
 // 所有"写"操作的命令
 pub static WRITE_CMD: [&str; 2] = ["SET", "HSET"];
