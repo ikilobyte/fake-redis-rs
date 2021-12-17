@@ -1,13 +1,14 @@
 use crate::client::Client;
-use crate::protocol::Parser;
+use crate::protocol::Protocol;
 use crate::DB;
 use anyhow::Error;
 use bytes::{Bytes, BytesMut};
+use std::collections::HashMap;
 use std::io::{Cursor, Write};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::{TcpListener, TcpStream};
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct Serve {
     host: String,
     port: u16,
@@ -66,6 +67,10 @@ impl Serve {
                     // 获取到完整的数据包
                     println!("client.buffer {:?}", client.buffer);
                     if let Ok(params) = client.get_complete_package() {
+                        println!("{:#?}", params);
+
+                        let protocol: Protocol = params.into();
+                        println!("{:#?}", protocol);
                         socket_writer.write(b"+OK\r\n").await;
                     }
                 }
