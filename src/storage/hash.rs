@@ -57,7 +57,7 @@ impl THash {
                     format!(":0\r\n")
                 } else {
                     for field in fields.iter() {
-                        if let Some(x) = map.remove(field) {
+                        if let Some(_) = map.remove(field) {
                             count += 1;
                         }
                     }

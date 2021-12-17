@@ -1,11 +1,5 @@
 use crate::protocol::Protocol;
 
-// 所有"写"操作的命令
-pub static WRITE_CMD: [&str; 2] = ["SET", "HSET"];
-
-// 所有"删"操作的命令
-pub static DELETE_CMD: [&str; 2] = ["DEL", "HDEL"];
-
 // redis的五种数据类型
 #[derive(Clone, Debug, PartialEq)]
 pub enum KeyType {

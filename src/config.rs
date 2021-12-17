@@ -17,3 +17,9 @@ lazy_static! {
         map
     };
 }
+
+// 所有"写"操作的命令
+pub static WRITE_CMD: [&str; 2] = ["SET", "HSET"];
+
+// 所有"删"操作的命令
+// pub static DELETE_CMD: [&str; 2] = ["DEL", "HDEL"];
