@@ -1,6 +1,5 @@
-use crate::protocol::{Lock, TTL};
+use crate::protocol::{Lock, Protocol, TTL};
 use crate::storage::types::KeyType;
-use crate::Protocol;
 
 // 解析：set key value [EX seconds] [PX milliseconds] [NX|XX]
 pub fn transform(param: Vec<String>) -> Protocol {

@@ -1,6 +1,6 @@
 use crate::parser::get;
 use crate::parser::set;
-use crate::Protocol;
+use crate::protocol::Protocol;
 use lazy_static::lazy_static;
 use std::collections::HashMap;
 
