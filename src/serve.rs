@@ -1,4 +1,5 @@
 use crate::client::Client;
+use crate::parser;
 use crate::protocol::Protocol;
 use crate::DB;
 use anyhow::Error;
@@ -55,7 +56,7 @@ impl Serve {
         let (mut socket_reader, mut socket_writer) = stream.into_split();
 
         // 处理通道消息
-        // tokio::spawn(client.clone().rev_forward_message(socket_writer));
+        tokio::spawn(client.clone().rev_forward_message(socket_writer));
 
         loop {
             // 会分批读取
@@ -67,11 +68,9 @@ impl Serve {
                     // 获取到完整的数据包
                     println!("client.buffer {:?}", client.buffer);
                     if let Ok(params) = client.get_complete_package() {
-                        println!("{:#?}", params);
-
-                        let protocol: Protocol = params.into();
-                        println!("{:#?}", protocol);
-                        socket_writer.write(b"+OK\r\n").await;
+                        if let Err(e) = client.sender.send(parser::entry(params)) {
+                            println!("client.sender.error {:?}", e);
+                        }
                     }
                 }
                 Err(e) => {

@@ -111,7 +111,9 @@ impl Client {
         for mut i in self.cursor..self.buffer.len() {
             // 一行的开始
             let byte = self.buffer[i];
-            if byte == b'*' {
+
+            // 修复 keys *
+            if byte == b'*' && self.param_number <= 0 {
                 self.head = true;
             }
 
