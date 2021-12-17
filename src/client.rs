@@ -1,6 +1,7 @@
 use crate::protocol::Protocol;
 use crate::storage::types::Message;
 use crate::DB;
+use bytes::BytesMut;
 use std::sync::Arc;
 use tokio::io::AsyncWriteExt;
 use tokio::net::tcp::OwnedWriteHalf;
@@ -12,6 +13,11 @@ pub struct Client {
     inner: Arc<Mutex<Inner>>,
     pub sender: UnboundedSender<Result<Message, ()>>,
     db: DB,
+    pub param_number: usize,
+    pub cursor: usize,
+    pub buffer: BytesMut,
+    pub params: Vec<String>,
+    head: bool,
 }
 
 #[derive(Debug)]
@@ -29,6 +35,11 @@ impl Client {
             inner: Arc::new(Mutex::new(Inner { id, reader })),
             sender,
             db,
+            param_number: 0,
+            cursor: 0,
+            buffer: BytesMut::new(),
+            params: vec![],
+            head: false,
         }
     }
 
@@ -89,5 +100,55 @@ impl Client {
                 }
             }
         }
+    }
+
+    // 获取完整的数据包，协议规范：https://redis.io/topics/protocol
+    // 如：*1\r\n$7\r\nCOMMAND\r\n
+    // 如：*3\r\n$3\r\nset\r\n$3\r\nkey\r\n$5\r\nvalue\r\n
+    // 如：*4\r\n$4\r\nhset\r\n$3\r\nkey\r\n$5\r\nfield\r\n$5\r\nvalue\r\n
+    // 数据过长会分批读取到self.buffer中，所以需要分批解析出数据包，解析完毕后，恢复初始状态
+    pub fn get_complete_package(&mut self) -> Result<Vec<String>, ()> {
+        for mut i in self.cursor..self.buffer.len() {
+            // 一行的开始
+            let byte = self.buffer[i];
+            if byte == b'*' {
+                self.head = true;
+            }
+
+            // 找出这个包一共有几个参数
+            if self.head && self.buffer[i] == b'\r' && self.buffer[i + 1] == b'\n' {
+                let content = &String::from_utf8_lossy(&self.buffer[self.cursor..i]).to_string();
+                self.param_number = content[1..].parse().unwrap();
+                self.head = false;
+                self.params.push(content.clone());
+                self.cursor += i + 2;
+                i += 2;
+            }
+
+            // 开始寻找所有参数
+            if self.param_number >= 1 {
+                if self.buffer[i] == b'\r' && self.buffer[i + 1] == b'\n' {
+                    // 改变参数和游标
+                    self.params
+                        .push(String::from_utf8_lossy(&self.buffer[self.cursor..i]).to_string());
+                    self.cursor = i + 2;
+                }
+
+                // 参数完整
+                if self.param_number * 2 + 1 == self.params.len() {
+                    // 重置状态，等待下一个完整的数据包
+                    let params = self.params.clone();
+                    self.head = false;
+                    self.param_number = 0;
+                    self.cursor = 0;
+                    self.buffer = BytesMut::new();
+                    self.params = vec![];
+
+                    return Ok(params);
+                }
+            }
+        }
+
+        return Err(());
     }
 }
