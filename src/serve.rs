@@ -40,8 +40,6 @@ impl Serve {
 
                     // 处理连接信息
                     tokio::spawn(self.clone().handle_connect(stream, socket_id, db));
-
-                    println!("spawn end!");
                 }
                 Err(e) => {
                     println!("accept.error listener {:?} error {:?}", listener, e);
@@ -69,7 +67,7 @@ impl Serve {
                 }
                 Ok(_) => {
                     // 获取到完整的数据包
-                    println!("rev buffer {:#?}", client.buffer);
+                    // println!("rev buffer {:#?}", client.buffer);
                     if let Ok(params) = client.get_complete_package() {
                         // 发送数据
                         if let Err(e) = client.sender.send(parser::entry(params)) {
