@@ -3,8 +3,8 @@ name: Rust
 on:
     push:
         tags:
-            - v-*
-            
+            - "*"
+
 env:
     CARGO_TERM_COLOR: always
 
@@ -16,12 +16,6 @@ jobs:
         steps:
             -   name: Checkout code
                 uses: actions/checkout@v2
-
-
-            -   name: Get version
-                id: get_version
-                run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
-
 
             -   name: show
                 run: |
@@ -47,7 +41,7 @@ jobs:
                     prerelease: false
 
 
-            # 上传文件到actions
+            # 上传文件到 release
             -   name: Upload Release cgo linux
                 uses: actions/upload-release-asset@v1.0.1
                 env:
