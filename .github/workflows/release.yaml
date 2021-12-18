@@ -2,10 +2,8 @@ name: Rust
 
 on:
     push:
-        # Sequence of patterns matched against refs/tags
-        branches:
-            - main
-
+        tags:
+            - "v*"
 
 env:
     CARGO_TERM_COLOR: always
@@ -19,15 +17,10 @@ jobs:
             -   name: Checkout code
                 uses: actions/checkout@v2
 
-            -   name: show
-                run: |
-                    rustc --version
-                    cargo --version
-
             -   name: cargo build
                 run: |
+                    pwd
                     cargo build --release
-                    ls -al
                     zip /home/runner/work/fake-redis-rs/fake-redis-rs.zip /home/runner/work/fake-redis-rs/fake-redis-rs
 
             # 创建release
@@ -45,11 +38,11 @@ jobs:
 
             # 上传文件到 release
             -   name: Upload Release cgo linux
-                uses: actions/upload-release-asset@v1.0.1
+                uses: actions/upload-release-asset@v1
                 env:
                     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
                 with:
                     upload_url: ${{ steps.create_release.outputs.upload_url }}
                     asset_path: /home/runner/work/fake-redis-rs/fake-redis-rs.zip
-                    asset_name: fake-redis-rs-${{ steps.create_release.outputs.tag }}-linux-x64.zip
+                    asset_name: fake-redis-rs-${{ github.ref }}.zip
                     asset_content_type: application/zip
