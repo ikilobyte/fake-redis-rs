@@ -1,41 +1,37 @@
-name: Rust
+name: create release
 
 on:
     push:
         tags:
-            - "v*"
+            - "v*"  # 如：v0.0.1 v1 v0.1 v1
 
 env:
     CARGO_TERM_COLOR: always
 
 jobs:
     build:
-
         runs-on: ubuntu-latest
 
         steps:
             -   name: Checkout code
                 uses: actions/checkout@v2
 
+            # 取出git tag的版本号，用于release的版本号
             -   name: Generate App Version
-                run: |
-                    echo APP_VERSION=`git describe --tags --always` >> $GITHUB_ENV
-                    echo $GITHUB_ENV
-                    pwd
+                run: echo APP_VERSION=`git describe --tags --always` >> $GITHUB_ENV
 
             -   name: cargo build
                 run: |
-                    pwd
                     cargo build --release
-                    ls -al target/release/fake-redis
-                    zip fake-redis.zip target/release/fake-redis
+                    cp target/release/fake-redis .
+                    zip outout.zip fake-redis
 
             # 创建release
             -   name: Create Release
                 id: create_release
                 uses: actions/create-release@v1
                 env:
-                    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
+                    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
                 with:
                     tag_name: ${{ env.APP_VERSION }}
                     release_name: ${{ env.APP_VERSION }}
@@ -43,13 +39,13 @@ jobs:
                     prerelease: false
 
 
-#            # 上传文件到 release
+            # 上传文件到 release
             -   name: Upload Binary File To Release
                 uses: actions/upload-release-asset@v1
                 env:
                     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
                 with:
                     upload_url: ${{ steps.create_release.outputs.upload_url }}
-                    asset_path: fake-redis.zip
-                    asset_name: fake-redis.zip
+                    asset_path: outout.zip
+                    asset_name: outout.zip
                     asset_content_type: application/zip
