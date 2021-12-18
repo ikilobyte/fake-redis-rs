@@ -17,32 +17,38 @@ jobs:
             -   name: Checkout code
                 uses: actions/checkout@v2
 
+            -   name: Generate App Version
+                run: |
+                    echo APP_VERSION=`git describe --tags --always` >> $GITHUB_ENV
+                    echo $GITHUB_ENV
+                    pwd
+
             -   name: cargo build
                 run: |
                     pwd
                     cargo build --release
-                    zip /home/runner/work/fake-redis-rs/fake-redis-rs.zip /home/runner/work/fake-redis-rs/fake-redis-rs
+                    ls -al target/release/fake-redis
 
             # 创建release
-            -   name: Create Release
-                id: create_release
-                uses: actions/create-release@v1
-                env:
-                    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
-                with:
-                    tag_name: ${{ github.ref }}
-                    release_name: Release ${{ github.ref }}
-                    draft: false
-                    prerelease: false
-
-
-            # 上传文件到 release
-            -   name: Upload Release cgo linux
-                uses: actions/upload-release-asset@v1
-                env:
-                    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-                with:
-                    upload_url: ${{ steps.create_release.outputs.upload_url }}
-                    asset_path: /home/runner/work/fake-redis-rs/fake-redis-rs.zip
-                    asset_name: fake-redis-rs-${{ github.ref }}.zip
-                    asset_content_type: application/zip
+#            -   name: Create Release
+#                id: create_release
+#                uses: actions/create-release@v1
+#                env:
+#                    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
+#                with:
+#                    tag_name: ${{ github.ref }}
+#                    release_name: Release ${{ github.ref }}
+#                    draft: false
+#                    prerelease: false
+#
+#
+#            # 上传文件到 release
+#            -   name: Upload Release cgo linux
+#                uses: actions/upload-release-asset@v1
+#                env:
+#                    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#                with:
+#                    upload_url: ${{ steps.create_release.outputs.upload_url }}
+#                    asset_path: /home/runner/work/fake-redis-rs/fake-redis-rs.zip
+#                    asset_name: fake-redis-rs-${{ github.ref }}.zip
+#                    asset_content_type: application/zip
