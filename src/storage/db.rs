@@ -39,7 +39,6 @@ impl DB {
     pub async fn handle(&self, message: Message) -> Result<String, ()> {
         let mut inner = self.inner().await;
 
-        println!("inner {:?} self.inner {:?}", inner, self.inner);
         let key = message.key.clone();
         let protocol = message.protocol.clone();
         let key_type = protocol.clone().into();

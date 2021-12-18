@@ -10,6 +10,7 @@ mod storage;
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
+    println!("process.id {:#?}", std::process::id());
     let db = DB::new();
     serve::Serve::new("0.0.0.0".to_string(), 6379)
         .start(db)

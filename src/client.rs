@@ -1,4 +1,4 @@
-use crate::protocol::{Message, Protocol};
+use crate::protocol::{Message, Protocol, StreamStatus};
 // use crate::storage::types::Message;
 use crate::DB;
 use bytes::BytesMut;
@@ -11,7 +11,7 @@ use tokio::sync::{Mutex, MutexGuard};
 #[derive(Debug, Clone)]
 pub struct Client {
     inner: Arc<Mutex<Inner>>,
-    pub sender: UnboundedSender<Result<Message, ()>>,
+    pub sender: UnboundedSender<Result<Message, StreamStatus>>,
     db: DB,
     pub param_number: usize,
     pub cursor: usize,
@@ -23,7 +23,7 @@ pub struct Client {
 #[derive(Debug)]
 pub struct Inner {
     pub id: usize,
-    pub reader: UnboundedReceiver<Result<Message, ()>>,
+    pub reader: UnboundedReceiver<Result<Message, StreamStatus>>,
 }
 
 impl Client {
@@ -52,11 +52,22 @@ impl Client {
     pub async fn rev_forward_message(self, mut socket_writer: OwnedWriteHalf) {
         let mut inner = self.inner().await;
         while let Some(resp) = inner.reader.recv().await {
-            if let Err(_) = resp {
-                if let Err(e) = socket_writer.write(b"-command unsupport\r\n").await {
-                    println!("Protocol::UnSupport write error -> {:#?}", e);
+            // 有错误
+            if let Err(status) = resp {
+                match status {
+                    StreamStatus::Online => {
+                        if let Err(e) = socket_writer.write(b"-command unsupport\r\n").await {
+                            println!("Protocol::UnSupport write error -> {:#?}", e);
+                        }
+                        continue;
+                    }
+
+                    // 离线了，退出
+                    // CLOSE_WAIT，收到断开连接包，回复Ack，后进入这个状态，稍后也会发送FIN给主动发送端，收到Ack后进入CLOSED状态，然后释放资源，
+                    // 如果不退出循环，`socket_writer` 一直持有在内存中，无法释放，也就是不能主动发送FIN给关闭端，所以一直是在CLOSE_WAIT状态
+                    // 关闭通道
+                    StreamStatus::Offline => break,
                 }
-                continue;
             }
 
             let message = resp.unwrap();

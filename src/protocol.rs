@@ -96,3 +96,9 @@ pub struct Message {
     pub key: String,
     pub cmd: String,
 }
+
+#[derive(Debug)]
+pub enum StreamStatus {
+    Online,
+    Offline,
+}

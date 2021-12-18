@@ -1,5 +1,5 @@
 use crate::config::PARSE_LIST;
-use crate::protocol::{Message, Protocol};
+use crate::protocol::{Message, Protocol, StreamStatus};
 
 pub mod command;
 pub mod del;
@@ -10,10 +10,10 @@ pub mod hset;
 pub mod set;
 
 // 解析入口
-pub fn entry(param: Vec<String>) -> Result<Message, ()> {
+pub fn entry(param: Vec<String>) -> Result<Message, StreamStatus> {
     // 参数少了，就是语法错误
     if param.len() < 2 {
-        return Err(());
+        return Err(StreamStatus::Online);
     }
 
     // 处理一下，只保留实用的数据
@@ -38,5 +38,5 @@ pub fn entry(param: Vec<String>) -> Result<Message, ()> {
         return Ok(Message { protocol, cmd, key });
     }
 
-    return Err(());
+    return Err(StreamStatus::Online);
 }

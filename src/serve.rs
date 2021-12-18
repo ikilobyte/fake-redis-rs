@@ -1,8 +1,9 @@
 use crate::client::Client;
 use crate::parser;
+use crate::protocol::StreamStatus;
 use crate::DB;
 use anyhow::Error;
-use tokio::io::AsyncReadExt;
+use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::{TcpListener, TcpStream};
 
 #[derive(Clone)]
@@ -47,8 +48,6 @@ impl Serve {
                 }
             }
         }
-
-        Ok(())
     }
 
     // 处理连接
@@ -64,10 +63,13 @@ impl Serve {
         loop {
             // 会分批读取
             match socket_reader.read_buf(&mut client.buffer).await {
-                Ok(0) => break,
+                Ok(0) => {
+                    client.sender.send(Err(StreamStatus::Offline));
+                    break;
+                }
                 Ok(_) => {
                     // 获取到完整的数据包
-                    println!("client.buffer {:?}", client.buffer);
+                    println!("rev buffer {:#?}", client.buffer);
                     if let Ok(params) = client.get_complete_package() {
                         // 发送数据
                         if let Err(e) = client.sender.send(parser::entry(params)) {
