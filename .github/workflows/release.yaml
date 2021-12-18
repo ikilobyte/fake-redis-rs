@@ -2,8 +2,8 @@ name: Rust
 
 on:
     push:
-        branches:
-            -   main
+        tags:
+            - '*'
 env:
     CARGO_TERM_COLOR: always
 
@@ -16,8 +16,11 @@ jobs:
             -   name: Checkout code
                 uses: actions/checkout@v2
 
-            -   name: Generate App Version
-                run: echo APP_VERSION=`git describe --tags --always` >> $GITHUB_ENV
+
+            -   name: Get version
+                id: get_version
+                run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
+
 
             -   name: show
                 run: |
@@ -28,7 +31,7 @@ jobs:
                 run: |
                     cargo build --release
                     ls -al
-                    zip fake-redis-rs.zip fake-redis-rs
+                    zip /home/runner/work/fake-redis-rs/fake-redis-rs.zip /home/runner/work/fake-redis-rs/fake-redis-rs
 
             # 创建release
             -   name: Create Release
@@ -39,10 +42,6 @@ jobs:
                 with:
                     tag_name: ${{ github.ref }}
                     release_name: Release ${{ github.ref }}
-                    body: |
-                        Changes in this Release
-                        - First Change
-                        - Second Change
                     draft: false
                     prerelease: false
 
@@ -54,6 +53,6 @@ jobs:
                     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
                 with:
                     upload_url: ${{ steps.create_release.outputs.upload_url }}
-                    asset_path: ./fake-redis-rs.zip
+                    asset_path: /home/runner/work/fake-redis-rs/fake-redis-rs.zip
                     asset_name: fake-redis-rs-${{ steps.create_release.outputs.tag }}-linux-x64.zip
                     asset_content_type: application/zip
