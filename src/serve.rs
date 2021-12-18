@@ -31,17 +31,24 @@ impl Serve {
         let listener = TcpListener::bind(format!("{}:{}", self.host, self.port)).await?;
 
         loop {
-            if let Ok((stream, _)) = listener.accept().await {
-                // 生成一个新的ID
-                let socket_id = self.incr_socket_id();
-                let db = db.clone();
+            match listener.accept().await {
+                Ok((stream, _)) => {
+                    // 生成一个新的ID
+                    let socket_id = self.incr_socket_id();
+                    let db = db.clone();
 
-                // 处理连接信息
-                tokio::spawn(self.clone().handle_connect(stream, socket_id, db));
+                    // 处理连接信息
+                    tokio::spawn(self.clone().handle_connect(stream, socket_id, db));
+
+                    println!("spawn end!");
+                }
+                Err(e) => {
+                    println!("accept.error listener {:?} error {:?}", listener, e);
+                }
             }
         }
 
-        // Ok(())
+        Ok(())
     }
 
     // 处理连接
