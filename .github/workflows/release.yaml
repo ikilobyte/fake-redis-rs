@@ -23,7 +23,7 @@ jobs:
             -   name: cargo build
                 run: |
                     cargo build --release
-                    mkdie $APP_VERSION && cp target/release/fake-redis $APP_VERSION/fake-redis
+                    mkdir $APP_VERSION && cp target/release/fake-redis $APP_VERSION/fake-redis
                     zip outout.zip $APP_VERSION/fake-redis
 
             # 创建release
