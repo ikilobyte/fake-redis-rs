@@ -28,27 +28,28 @@ jobs:
                     pwd
                     cargo build --release
                     ls -al target/release/fake-redis
+                    zip fake-redis.zip target/release/fake-redis
 
             # 创建release
-#            -   name: Create Release
-#                id: create_release
-#                uses: actions/create-release@v1
-#                env:
-#                    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
-#                with:
-#                    tag_name: ${{ github.ref }}
-#                    release_name: Release ${{ github.ref }}
-#                    draft: false
-#                    prerelease: false
-#
-#
+            -   name: Create Release
+                id: create_release
+                uses: actions/create-release@v1
+                env:
+                    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
+                with:
+                    tag_name: ${{ env.APP_VERSION }}
+                    release_name: ${{ env.APP_VERSION }}
+                    draft: false
+                    prerelease: false
+
+
 #            # 上传文件到 release
-#            -   name: Upload Release cgo linux
-#                uses: actions/upload-release-asset@v1
-#                env:
-#                    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#                with:
-#                    upload_url: ${{ steps.create_release.outputs.upload_url }}
-#                    asset_path: /home/runner/work/fake-redis-rs/fake-redis-rs.zip
-#                    asset_name: fake-redis-rs-${{ github.ref }}.zip
-#                    asset_content_type: application/zip
+            -   name: Upload Binary File To Release
+                uses: actions/upload-release-asset@v1
+                env:
+                    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                with:
+                    upload_url: ${{ steps.create_release.outputs.upload_url }}
+                    asset_path: fake-redis.zip
+                    asset_name: fake-redis.zip
+                    asset_content_type: application/zip
