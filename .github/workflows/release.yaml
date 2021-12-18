@@ -21,23 +21,24 @@ jobs:
                     rustc --version
                     cargo --version
 
-            -   name: create release
-                id: create_release
-                uses: actions/create-release@v1
+            -   name: cargo build
+                run: |
+                    cargo build --release
+                    ls -al target/release
+
+#            -   name: Uploading assets...
+#                if: ${{ !env.ACT }}
+#                id: upload-release-asset
+#                uses: actions/upload-release-asset@v1
+#                env:
+#                    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#                with:
+#                    upload_url: ${{ github.event.release.upload_url }}
+#                    asset_path: ./kubectl-karmada-${{ matrix.goos }}-${{ matrix.goarch }}.tgz
+#                    asset_name: kubectl-karmada-${{ matrix.goos }}-${{ matrix.goarch }}.tgz
+#                    asset_content_type: application/gzip
 
 
-                env:
-                    # 这个token无需自己创建
-                    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
-                with:
-                    tag_name: ${{ github.ref }}
-                    release_name: Release ${{ github.ref }}
-                    body: |
-                        Changes in this Release
-                        - First Change
-                        - Second Change
-                    draft: false
-                    prerelease: false
 
 
 #            -   name: Build
