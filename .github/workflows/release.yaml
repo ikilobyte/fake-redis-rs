@@ -2,8 +2,10 @@ name: Rust
 
 on:
     push:
-        tags:
-            - release-*
+        # Sequence of patterns matched against refs/tags
+        branches:
+            - main
+
 
 env:
     CARGO_TERM_COLOR: always
