@@ -23,8 +23,8 @@ jobs:
             -   name: cargo build
                 run: |
                     cargo build --release
-                    cp target/release/fake-redis .
-                    zip outout.zip fake-redis
+                    mkdie $APP_VERSION && cp target/release/fake-redis $APP_VERSION/fake-redis
+                    zip outout.zip $APP_VERSION/fake-redis
 
             # 创建release
             -   name: Create Release
@@ -46,6 +46,6 @@ jobs:
                     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
                 with:
                     upload_url: ${{ steps.create_release.outputs.upload_url }}
-                    asset_path: outout.zip
-                    asset_name: outout.zip
+                    asset_path: output.zip
+                    asset_name: output.zip
                     asset_content_type: application/zip
