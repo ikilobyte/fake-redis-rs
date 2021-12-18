@@ -2,8 +2,8 @@ name: Rust
 
 on:
     push:
-        tags:
-            - release-*
+        branches:
+            -   main
 env:
     CARGO_TERM_COLOR: always
 
@@ -14,8 +14,14 @@ jobs:
 
         steps:
             -   uses: actions/checkout@v2
-
+                with:
+                    rust-version: 1.55.0
             -   name: show
                 run: |
                     rustc --version
                     cargo --version
+
+#            -   name: Build
+#                run: |
+#                    cargo build --release
+#                    ls -al
