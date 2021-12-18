@@ -13,13 +13,32 @@ jobs:
         runs-on: ubuntu-latest
 
         steps:
-            -   uses: actions/checkout@v2
-                with:
-                    rust-version: 1.55.0
+            -   name: Checkout code
+                uses: actions/checkout@v2
+
             -   name: show
                 run: |
                     rustc --version
                     cargo --version
+
+            -   name: create release
+                id: create_release
+                uses: actions/create-release@v1
+
+
+                env:
+                    # 这个token无需自己创建
+                    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
+                with:
+                    tag_name: ${{ github.ref }}
+                    release_name: Release ${{ github.ref }}
+                    body: |
+                        Changes in this Release
+                        - First Change
+                        - Second Change
+                    draft: false
+                    prerelease: false
+
 
 #            -   name: Build
 #                run: |
