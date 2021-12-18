@@ -15,7 +15,7 @@ jobs:
         steps:
             -   uses: actions/checkout@v2
 
-            -   name: Build
+            -   name: show
                 run: |
-                    cargo build --release
-                    ls -al
+                    rustc --version
+                    cargo --version
